@@ -1,0 +1,119 @@
+// Prisma Schema untuk TamanBaca Warga
+// Keamanan & Integritas: Enums ketat, relasi Cascade/Restrict, dan audit logging
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+enum Role {
+  ADMIN
+  MEMBER
+}
+
+enum LoanStatus {
+  PENDING
+  BORROWED
+  RETURNED
+  REJECTED
+  CANCELLED
+}
+
+model User {
+  id               String      @id @default(uuid())
+  name             String
+  email            String      @unique
+  passwordHash     String
+  role             Role        @default(MEMBER)
+  isActive         Boolean     @default(true)
+  failedLoginCount Int         @default(0)
+  lockedUntil      DateTime?
+  createdAt        DateTime    @default(now())
+  updatedAt        DateTime    @updatedAt
+
+  loans            Loan[]
+  sessions         Session[]
+  auditLogs        AuditLog[]
+
+  @@index([email])
+}
+
+model Session {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+}
+
+model Category {
+  id        String   @id @default(uuid())
+  name      String   @unique
+  books     Book[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Book {
+  id          String    @id @default(uuid())
+  title       String
+  author      String
+  publisher   String
+  year        Int
+  isbn        String?   @unique
+  stock       Int       @default(1)
+  description String?
+  coverUrl    String?
+  categoryId  String
+  category    Category  @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+  loans       Loan[]
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([categoryId])
+  @@index([title])
+  @@index([author])
+}
+
+model Loan {
+  id          String      @id @default(uuid())
+  userId      String
+  user        User        @relation(fields: [userId], references: [id], onDelete: Restrict)
+  bookId      String
+  book        Book        @relation(fields: [bookId], references: [id], onDelete: Restrict)
+  requestDate DateTime    @default(now())
+  loanDate    DateTime?
+  dueDate     DateTime?
+  returnDate  DateTime?
+  status      LoanStatus  @default(PENDING)
+  fine        Int         @default(0)
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  @@index([userId])
+  @@index([bookId])
+  @@index([status])
+}
+
+model AuditLog {
+  id        String   @id @default(uuid())
+  userId    String?
+  user      User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  action    String
+  entity    String
+  entityId  String?
+  ipAddress String?
+  details   String?
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([action])
+  @@index([createdAt])
+}
