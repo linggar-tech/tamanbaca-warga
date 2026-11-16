@@ -1,8 +1,9 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { cookies } from "next/headers";
 import prisma from "@/lib/prisma";
-import { requireAuth } from "@/lib/auth";
+import { requireAuth, SESSION_COOKIE_NAME } from "@/lib/auth";
 import { hashPassword, verifyPassword, isPasswordStrong } from "@/lib/password";
 import { createAuditLog } from "@/lib/audit";
 import { z } from "zod";
@@ -151,12 +152,25 @@ export async function changePasswordAction(
       data: { passwordHash: newHash },
     });
 
+    // Keamanan Manajemen Sesi: Cabut seluruh sesi aktif lain milik pengguna ini
+    const cookieStore = await cookies();
+    const currentSessionId = cookieStore.get(SESSION_COOKIE_NAME)?.value;
+
+    const deleteWhere: any = { userId: user.id };
+    if (currentSessionId) {
+      deleteWhere.id = { not: currentSessionId };
+    }
+
+    const revokedResult = await prisma.session.deleteMany({
+      where: deleteWhere,
+    });
+
     await createAuditLog({
       userId: user.id,
       action: "PASSWORD_CHANGED",
       entity: "User",
       entityId: user.id,
-      details: "Pengguna berhasil mengubah password akun.",
+      details: `Pengguna berhasil mengubah password. ${revokedResult.count} sesi aktif lainnya telah dicabut.`,
     });
 
     return {
