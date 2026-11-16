@@ -103,7 +103,7 @@ Aplikasi membaca seluruh konfigurasi sensitif dari variabel lingkungan. Sediakan
 | Nama Variabel | Wajib | Keterangan / Fungsi | Contoh Nilai (Bukan Rahasia) |
 |---|:---:|---|---|
 | `DATABASE_URL` | Ya | URL koneksi PostgreSQL ber-pooling (Neon SSL mode) | `postgresql://user:pass@ep-xyz.aws.neon.tech/neondb?sslmode=require` |
-| `DIRECT_URL` | Ya | URL koneksi langsung PostgreSQL tanpa pooler (untuk migrasi Prisma) | `postgresql://user:pass@ep-xyz.aws.neon.tech/neondb?sslmode=require` |
+| `DIRECT_URL` | Ya | URL koneksi langsung PostgreSQL tanpa pooler (untuk sinkronisasi skema Prisma db push / CLI) | `postgresql://user:pass@ep-xyz.aws.neon.tech/neondb?sslmode=require` |
 | `SESSION_SECRET` | Ya | Kunci acak minimal 32 karakter untuk verifikasi sesi | `a1b2c3d4e5f6... (hex string 32 bytes)` |
 | `SEED_ADMIN_EMAIL` | Ya | Alamat email akun Administrator demo awal | `admin@tamanbaca.id` |
 | `SEED_ADMIN_PASSWORD` | Ya | Kata sandi kuat akun Admin demo (min. 10 karakter, huruf + angka) | `AdminPass123!` |
@@ -133,6 +133,7 @@ cp .env.example .env
 Sesuaikan nilai `DATABASE_URL`, `DIRECT_URL`, dan password demo di dalam `.env`.
 
 ### 3. Sinkronisasi Skema Database & Seeding
+Proyek ini menggunakan `prisma db push` untuk menyinkronkan definisi skema Prisma secara langsung ke serverless PostgreSQL Neon tanpa memerlukan histori berkas migrasi lokal:
 ```bash
 # Sinkronkan skema tabel ke PostgreSQL Neon
 npx prisma db push
@@ -140,6 +141,8 @@ npx prisma db push
 # Jalankan seed data percontohan (Admin, Member, Kategori, Koleksi Buku Awal)
 npm run seed
 ```
+
+> 💡 **Catatan Peningkatan**: Jika di kemudian hari dibutuhkan pelacakan riwayat migrasi bertahap per-versi (*formal migration history tracking*), Anda dapat beralih ke alur `npx prisma migrate dev` dengan membuat baseline migrasi awal.
 
 ### 4. Jalankan Server Pengembangan
 ```bash
