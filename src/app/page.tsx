@@ -5,6 +5,8 @@ import { Footer } from "@/components/layout/Footer";
 import { BookCoverImage } from "@/components/books/BookCoverImage";
 import { BookOpen, ShieldCheck, Users, ArrowRight, BookCheck, Sparkles } from "lucide-react";
 
+export const dynamic = "force-dynamic";
+
 export default async function HomePage() {
   // Ambil statistik ringkas dan 4 buku terbaru dari database Neon (tanpa menarik kolom coverUrl)
   const [totalBooks, totalMembers, totalLoans, latestBooks] = await Promise.all([
