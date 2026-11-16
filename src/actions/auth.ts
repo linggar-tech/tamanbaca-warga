@@ -13,7 +13,7 @@ import {
   getCurrentUser,
 } from "@/lib/auth";
 import { registerSchema, loginSchema } from "@/schemas/auth.schema";
-import { checkRateLimit } from "@/lib/rate-limit";
+import { checkDbRateLimit } from "@/lib/rate-limit";
 import { createAuditLog } from "@/lib/audit";
 import { Role } from "@prisma/client";
 
@@ -47,11 +47,15 @@ export async function registerAction(
 ): Promise<AuthActionResult> {
   const clientIp = await getClientIp();
 
-  // 1. Rate Limiting: Maksimal 5 registrasi per 10 menit per IP
-  const rateLimit = checkRateLimit(`register_${clientIp}`, {
-    limit: 5,
-    windowMs: 10 * 60 * 1000,
-  });
+  // 1. Rate Limiting berbasis Database (AuditLog): Maksimal 5 registrasi per 10 menit per IP
+  const rateLimit = await checkDbRateLimit(
+    ["REGISTER_ATTEMPT", "REGISTER_SUCCESS"],
+    clientIp,
+    {
+      limit: 5,
+      windowMs: 10 * 60 * 1000,
+    }
+  );
 
   if (!rateLimit.success) {
     return {
@@ -59,6 +63,14 @@ export async function registerAction(
       message: "Terlalu banyak permintaan pendaftaran. Silakan coba lagi beberapa saat lagi.",
     };
   }
+
+  // Catat REGISTER_ATTEMPT ke database agar terhitung secara persisten di serverless
+  await createAuditLog({
+    action: "REGISTER_ATTEMPT",
+    entity: "User",
+    ipAddress: clientIp,
+    details: "Percobaan pendaftaran akun warga",
+  });
 
   // 2. Validasi Input dengan Zod
   const rawData = {
@@ -143,8 +155,8 @@ export async function loginAction(
 ): Promise<AuthActionResult> {
   const clientIp = await getClientIp();
 
-  // 1. Rate Limiting per IP
-  const rateLimit = checkRateLimit(`login_${clientIp}`, {
+  // 1. Rate Limiting berbasis Database (AuditLog): Maksimal 5 login gagal per 1 menit per IP
+  const rateLimit = await checkDbRateLimit("LOGIN_FAILED", clientIp, {
     limit: 5,
     windowMs: 60 * 1000,
   });
