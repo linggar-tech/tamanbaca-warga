@@ -97,9 +97,23 @@ export async function registerAction(
     });
 
     if (existingUser) {
+      // Keamanan Anti-User Enumeration:
+      // Jalankan hash dummy agar waktu komputasi CPU identik (~250ms) dengan pendaftaran baru.
+      // Kembalikan pesan sukses yang identik agar penyerang tidak dapat memindai email yang terdaftar.
+      await hashPassword(password);
+
+      await createAuditLog({
+        userId: existingUser.id,
+        action: "REGISTER_DUPLICATE_ATTEMPT",
+        entity: "User",
+        entityId: existingUser.id,
+        ipAddress: clientIp,
+        details: `Upaya pendaftaran ulang dengan email yang sudah terdaftar: ${email}`,
+      });
+
       return {
-        success: false,
-        message: "Email sudah terdaftar. Silakan gunakan email lain atau login.",
+        success: true,
+        message: "Pendaftaran berhasil diproses! Silakan masuk dengan akun Anda.",
       };
     }
 
@@ -129,7 +143,7 @@ export async function registerAction(
 
     return {
       success: true,
-      message: "Pendaftaran berhasil! Silakan masuk dengan akun baru Anda.",
+      message: "Pendaftaran berhasil diproses! Silakan masuk dengan akun Anda.",
     };
   } catch (error) {
     console.error("[REGISTER ERROR]", error);
