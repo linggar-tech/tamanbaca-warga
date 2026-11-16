@@ -8,7 +8,7 @@ const SESSION_COOKIE = "tb_session_token";
  * Memeriksa:
  * 1. Host dari request saat ini.
  * 2. Nilai dari variabel lingkungan APP_URL / NEXT_PUBLIC_APP_URL.
- * 3. Domain deployment Vercel (termasuk preview domains *.vercel.app).
+ * 3. Domain deployment Vercel resmi proyek ini (VERCEL_URL / VERCEL_PROJECT_PRODUCTION_URL).
  */
 function isAllowedDomain(targetHost: string, requestHost: string | null): boolean {
   const normalizedTarget = targetHost.toLowerCase();
@@ -31,14 +31,9 @@ function isAllowedDomain(targetHost: string, requestHost: string | null): boolea
     }
   }
 
-  // 3. Domain otomatis Vercel (Production URL & Preview Deployments)
+  // 3. Domain deployment Vercel resmi milik proyek ini (VERCEL_URL / VERCEL_PROJECT_PRODUCTION_URL)
   const vercelUrl = process.env.VERCEL_PROJECT_PRODUCTION_URL || process.env.VERCEL_URL;
   if (vercelUrl && normalizedTarget === vercelUrl.toLowerCase()) {
-    return true;
-  }
-
-  // Izinkan semua subdomain *.vercel.app untuk mendukung branch preview
-  if (normalizedTarget.endsWith(".vercel.app")) {
     return true;
   }
 
