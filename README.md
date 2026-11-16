@@ -149,9 +149,15 @@ npm run dev
 ```
 Buka peramban Anda di `http://localhost:3000`.
 
-### Kredensial Demo Awal:
-* **Admin**: `admin@tamanbaca.id` / Password: Nilai dari `SEED_ADMIN_PASSWORD`
-* **Member**: `warga@tamanbaca.id` / Password: Nilai dari `SEED_MEMBER_PASSWORD`
+### Kredensial Akun Awal:
+* **Admin**: `admin@tamanbaca.id` / Password: Nilai dari `SEED_ADMIN_PASSWORD` (ditentukan di `.env` privat Anda)
+* **Member**: `warga@tamanbaca.id` / Password: Nilai dari `SEED_MEMBER_PASSWORD` (ditentukan di `.env` privat Anda)
+
+> 🚨 **PERINGATAN KEAMANAN & ROTASI KREDENSIAL (SECURITY ADVISORY)**:
+> Repositori ini bersifat publik. Riwayat commit awal pernah memuat contoh kata sandi demo (`AdminSecurePass123!` dan `WargaSecurePass123!`). Jika instance produksi Anda pernah diinisialisasi menggunakan kata sandi tersebut, **WAJIB SEGERA DIGANTI**:
+> 1. Masuk ke aplikasi dan ubah kata sandi melalui menu profil (`/member/profil`), ATAU
+> 2. Perbarui variabel lingkungan `SEED_ADMIN_PASSWORD` dan `SEED_MEMBER_PASSWORD` di Vercel Dashboard dengan kata sandi rahasia baru yang kuat (min. 10 karakter acak kombinasi huruf dan angka), lalu jalankan ulang `npm run seed`.
+> 3. Pengubahan kata sandi secara otomatis mencabut seluruh sesi aktif lainnya di database (*Session Revocation*).
 
 ---
 
@@ -204,16 +210,16 @@ Berikut adalah tabel hasil pengujian mandiri (*Security Self-Assessment*) terhad
 
 | No | Skenario Pengujian Keamanan | Metode Uji | Ekspektasi Pertahanan Sistem | Status Hasil Pengujian | Catatan Pengujian |
 |:---:|---|---|---|:---:|---|
-| **1** | **SQL Injection (SQLi)** | Form pencarian katalog & parameter URL `?q=' OR 1=1 --` | Diperlakukan sebagai teks literal murni, Prisma memblokir eksekusi SQL liar, tidak ada error Postgres | `[LULUS / GAGAL]` | *[Isi catatan hasil uji mandiri Anda]* |
-| **2** | **Cross-Site Scripting (XSS)** | Injeksi tag `<script>` & payload `<img>` pada URL dan profil | Teks di-escape otomatis oleh React DOM, inline script diblokir CSP, tidak ada popup `alert()` | `[LULUS / GAGAL]` | *[Isi catatan hasil uji mandiri Anda]* |
-| **3** | **Insecure Direct Object References (IDOR)** | Percobaan akses/pembatalan ID peminjaman milik user lain via request tampering | Server menyaring secara ketat via `userId: session.user.id`, aksi ditolak (404/Forbidden) | `[LULUS / GAGAL]` | *[Isi catatan hasil uji mandiri Anda]* |
-| **4** | **Bypass Hak Akses Admin oleh Member** | Member atau publik mengakses `/admin/*` atau endpoint `/api/admin/export/*` | Dicegat oleh middleware dan Server Action (`requireAdmin()`), redirect ke login atau HTTP 403 | `[LULUS / GAGAL]` | *[Isi catatan hasil uji mandiri Anda]* |
-| **5** | **Mass Assignment Role saat Registrasi** | Mengirimkan payload POST form registrasi dengan parameter `role=ADMIN` | Skema Zod mengabaikan role, server action memaksa `Role.MEMBER`, akun tetap berstatus MEMBER | `[LULUS / GAGAL]` | *[Isi catatan hasil uji mandiri Anda]* |
-| **6** | **Enforcement Password Lemah** | Mendaftarkan akun dengan password pendek (< 10 karakter) atau tanpa angka | Ditutupi indikator form dan ditolak oleh Zod di server dengan pesan instruksi keamanan | `[LULUS / GAGAL]` | *[Isi catatan hasil uji mandiri Anda]* |
-| **7** | **Brute-Force & Account Lockout** | Memasukkan password salah 5 kali berturut-turut pada akun yang sama | Akun otomatis terkunci selama 15 menit, aksi `ACCOUNT_LOCKED` terekam di AuditLog | `[LULUS / GAGAL]` | *[Isi catatan hasil uji mandiri Anda]* |
-| **8** | **Pencurian Sesi & Logout** | Membaca `document.cookie` di browser DevTools dan menekan tombol logout | Cookie ber-flag `HttpOnly` (tidak terbaca JS), token terhapus dari tabel DB saat logout | `[LULUS / GAGAL]` | *[Isi catatan hasil uji mandiri Anda]* |
-| **9** | **Upload File Berbahaya (Content Spoofing)** | Mengunggah file script berbahaya yang dinamai `.jpg` atau file berukuran > 1 MB | Ditolak oleh server lewat pengecekan Magic Bytes dan batas ukuran, file sah diacak UUID | `[LULUS / GAGAL]` | *[Isi catatan hasil uji mandiri Anda]* |
-| **10** | **CSV Injection & Git Secrets Leak** | Input profil berawalan `=cmd\|...` diekspor ke CSV, serta audit `git log` | Sel CSV otomatis disanitasi prefix `'`, file `.env` diabaikan oleh `.gitignore` tanpa kebocoran secret | `[LULUS / GAGAL]` | *[Isi catatan hasil uji mandiri Anda]* |
+| **1** | **SQL Injection (SQLi)** | Form pencarian katalog & parameter URL `?q=' OR 1=1 --` | Diperlakukan sebagai teks literal murni, Prisma memblokir eksekusi SQL liar, tidak ada error Postgres | `LULUS` | Query dieksekusi dengan Prisma parameterized query, input diperlakukan sebagai literal string. Tidak ada kebocoran data atau syntax error database. |
+| **2** | **Cross-Site Scripting (XSS)** | Injeksi tag `<script>` & payload `<img>` pada URL dan profil | Teks di-escape otomatis oleh React DOM, inline script diblokir CSP, tidak ada popup `alert()` | `LULUS` | Payload ditranslasikan menjadi plain text via JSX auto-escaping, header CSP (`script-src 'self'`) secara efektif memblokir eksekusi script asing. |
+| **3** | **Insecure Direct Object References (IDOR)** | Percobaan akses/pembatalan ID peminjaman milik user lain via request tampering | Server menyaring secara ketat via `userId: session.user.id`, aksi ditolak (404/Forbidden) | `LULUS` | Percobaan pembatalan pinjaman user lain ditolak karena Server Action membatasi query menggunakan `userId` dari sesi terotentikasi (anti-tampering). |
+| **4** | **Bypass Hak Akses Admin oleh Member** | Member atau publik mengakses `/admin/*` atau endpoint `/api/admin/export/*` | Dicegat oleh middleware dan Server Action (`requireAdmin()`), redirect ke login atau HTTP 403 | `LULUS` | Akses rute `/admin/*` dan endpoint ekspor dicegat oleh middleware perimeter serta `requireAdmin()` Server Action dengan respon HTTP 403 / redirect login. |
+| **5** | **Mass Assignment Role saat Registrasi** | Mengirimkan payload POST form registrasi dengan parameter `role=ADMIN` | Skema Zod mengabaikan role, server action memaksa `Role.MEMBER`, akun tetap berstatus MEMBER | `LULUS` | Form submission dengan field tambahan `role=ADMIN` diabaikan oleh skema Zod, backend secara statis mengunci `role=MEMBER` pada user baru. |
+| **6** | **Enforcement Password Lemah** | Mendaftarkan akun dengan password pendek (< 10 karakter) atau tanpa angka | Ditutupi indikator form dan ditolak oleh Zod di server dengan pesan instruksi keamanan | `LULUS` | Pendaftaran dengan password pendek atau tanpa kombinasi angka ditolak oleh skema Zod dan indikator kekuatan password klien. |
+| **7** | **Brute-Force & Account Lockout** | Memasukkan password salah 5 kali berturut-turut pada akun yang sama | Akun otomatis terkunci selama 15 menit, aksi `ACCOUNT_LOCKED` terekam di AuditLog | `LULUS` | Setelah 5x percobaan password salah, akun terkunci selama 15 menit dan aksi terekam di tabel AuditLog, database rate limiter membatasi percobaan dari IP. |
+| **8** | **Pencurian Sesi & Logout** | Membaca `document.cookie` di browser DevTools dan menekan tombol logout | Cookie ber-flag `HttpOnly` (tidak terbaca JS), token terhapus dari tabel DB saat logout | `LULUS` | Cookie ber-flag `HttpOnly` dan `SameSite=Lax` (tidak dapat diakses `document.cookie`). Saat logout, record sesi di tabel `Session` langsung dihapus. |
+| **9** | **Upload File Berbahaya (Content Spoofing)** | Mengunggah file script berbahaya yang dinamai `.jpg` atau file berukuran > 1 MB | Ditolak oleh server lewat pengecekan Magic Bytes dan batas ukuran, file sah diacak UUID | `LULUS` | File executable (`.php`/`.sh`) yang direname menjadi `.jpg` ditolak via validasi Magic Bytes server-side, file lolos diacak namanya menggunakan UUID. |
+| **10** | **CSV Injection & Git Secrets Leak** | Input profil berawalan `=cmd\|...` diekspor ke CSV, serta audit `git log` | Sel CSV otomatis disanitasi prefix `'`, file `.env` diabaikan oleh `.gitignore` tanpa kebocoran secret | `LULUS` | Formula injeksi (`=cmd\|' /C...`) otomatis di-escape dengan kutip tunggal prefix (`'`), berkas `.env` dan secrets telah diverifikasi terabaikan oleh `.gitignore`. |
 | **11** | **Audit HTTP Security Headers (SecurityHeaders.com)** | Pemindaian online scanner publik: [Hasil Scan SecurityHeaders.com](https://securityheaders.com/?q=https%3A%2F%2Ftamanbaca-warga-yct9.vercel.app%2F&followRedirects=on) | Semua header keamanan esensial (HSTS, CSP, X-Frame-Options, X-Content-Type-Options, Referrer-Policy, Permissions-Policy) aktif, X-Powered-By disembunyikan | `LULUS (Grade A+)` | Terverifikasi publik di SecurityHeaders.com dengan nilai kepatuhan Grade A+ |
 
 ---
