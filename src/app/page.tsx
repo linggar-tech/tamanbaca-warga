@@ -8,35 +8,68 @@ import { BookOpen, ShieldCheck, Users, ArrowRight, BookCheck, Sparkles } from "l
 export const dynamic = "force-dynamic";
 
 export default async function HomePage() {
-  // Ambil statistik ringkas dan 4 buku terbaru dari database Neon (tanpa menarik kolom coverUrl)
-  const [totalBooks, totalMembers, totalLoans, latestBooks] = await Promise.all([
-    prisma.book.count(),
-    prisma.user.count({ where: { role: "MEMBER" } }),
-    prisma.loan.count(),
-    prisma.book.findMany({
-      take: 4,
-      orderBy: { createdAt: "desc" },
-      select: {
-        id: true,
-        title: true,
-        author: true,
-        year: true,
-        isbn: true,
-        stock: true,
-        category: {
-          select: {
-            name: true,
+  let totalBooks = 0;
+  let totalMembers = 0;
+  let totalLoans = 0;
+  let latestBooks: {
+    id: string;
+    title: string;
+    author: string;
+    year: number;
+    isbn: string | null;
+    stock: number;
+    category: {
+      name: string;
+    };
+  }[] = [];
+  let isDbConnected = true;
+
+  try {
+    // Ambil statistik ringkas dan 4 buku terbaru dari database Neon (tanpa menarik kolom coverUrl)
+    const results = await Promise.all([
+      prisma.book.count(),
+      prisma.user.count({ where: { role: "MEMBER" } }),
+      prisma.loan.count(),
+      prisma.book.findMany({
+        take: 4,
+        orderBy: { createdAt: "desc" },
+        select: {
+          id: true,
+          title: true,
+          author: true,
+          year: true,
+          isbn: true,
+          stock: true,
+          category: {
+            select: {
+              name: true,
+            },
           },
         },
-      },
-    }),
-  ]);
+      }),
+    ]);
+    totalBooks = results[0];
+    totalMembers = results[1];
+    totalLoans = results[2];
+    latestBooks = results[3];
+  } catch (error) {
+    isDbConnected = false;
+    console.error(
+      "[Database Connection Warning]: Tidak dapat terhubung ke database. Pastikan DATABASE_URL telah disetel di Vercel Dashboard (Settings > Environment Variables).",
+      error
+    );
+  }
 
   return (
     <div className="min-h-screen flex flex-col bg-[#FDFBF7]">
       <Navbar />
 
       <main className="flex-1">
+        {!isDbConnected && (
+          <div className="bg-amber-500/10 border-b border-amber-500/20 px-4 py-3 text-center text-xs text-amber-900">
+            ⚠️ <strong>Perhatian Sistem:</strong> Koneksi database belum terhubung. Pastikan variabel lingkungan <code>DATABASE_URL</code> telah ditambahkan di Vercel Dashboard (<em>Project Settings &gt; Environment Variables</em>).
+          </div>
+        )}
         {/* Hero Section */}
         <section className="relative overflow-hidden pt-12 pb-16 md:pt-20 md:pb-24 border-b border-stone-200/60 bg-gradient-to-b from-emerald-50/40 via-stone-50/20 to-transparent">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center flex flex-col items-center">

@@ -43,30 +43,57 @@ export default async function CatalogPage({ searchParams }: CatalogPageProps) {
   // 3. Eksekusi query dengan paginasi
   const skip = (page - 1) * limit;
 
-  const [categories, totalBooks, books] = await Promise.all([
-    prisma.category.findMany({ orderBy: { name: "asc" } }),
-    prisma.book.count({ where: whereCondition }),
-    prisma.book.findMany({
-      where: whereCondition,
-      skip,
-      take: limit,
-      orderBy: { createdAt: "desc" },
-      select: {
-        id: true,
-        title: true,
-        author: true,
-        publisher: true,
-        year: true,
-        isbn: true,
-        stock: true,
-        category: {
-          select: {
-            name: true,
+  let categories: { id: string; name: string }[] = [];
+  let totalBooks = 0;
+  let books: {
+    id: string;
+    title: string;
+    author: string;
+    publisher: string;
+    year: number;
+    isbn: string | null;
+    stock: number;
+    category: {
+      name: string;
+    };
+  }[] = [];
+  let isDbConnected = true;
+
+  try {
+    const results = await Promise.all([
+      prisma.category.findMany({
+        orderBy: { name: "asc" },
+        select: { id: true, name: true },
+      }),
+      prisma.book.count({ where: whereCondition }),
+      prisma.book.findMany({
+        where: whereCondition,
+        skip,
+        take: limit,
+        orderBy: { createdAt: "desc" },
+        select: {
+          id: true,
+          title: true,
+          author: true,
+          publisher: true,
+          year: true,
+          isbn: true,
+          stock: true,
+          category: {
+            select: {
+              name: true,
+            },
           },
         },
-      },
-    }),
-  ]);
+      }),
+    ]);
+    categories = results[0];
+    totalBooks = results[1];
+    books = results[2];
+  } catch (error) {
+    isDbConnected = false;
+    console.error("[Database Connection Warning in Katalog]:", error);
+  }
 
   const totalPages = Math.ceil(totalBooks / limit) || 1;
 
@@ -75,6 +102,11 @@ export default async function CatalogPage({ searchParams }: CatalogPageProps) {
       <Navbar />
 
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-10">
+        {!isDbConnected && (
+          <div className="bg-amber-500/10 border border-amber-500/20 rounded-2xl p-4 mb-6 text-center text-xs text-amber-900">
+            ⚠️ <strong>Perhatian Sistem:</strong> Koneksi database belum terhubung. Pastikan variabel lingkungan <code>DATABASE_URL</code> sudah disetel di Vercel Dashboard (<em>Project Settings &gt; Environment Variables</em>).
+          </div>
+        )}
         {/* Header Katalog */}
         <div className="mb-8">
           <h1 className="text-3xl font-extrabold text-stone-800 tracking-tight">Katalog Koleksi Buku</h1>
