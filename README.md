@@ -200,20 +200,21 @@ Aplikasi ini dikembangkan melalui kolaborasi terstruktur bersama **AI Agent (Goo
 
 ## 🧪 Ringkasan Hasil Self-Testing Keamanan
 
-Berikut adalah tabel hasil pengujian mandiri (*Security Self-Assessment*) terhadap 10 skenario serangan siber:
+Berikut adalah tabel hasil pengujian mandiri (*Security Self-Assessment*) terhadap 11 skenario keamanan siber:
 
 | No | Skenario Pengujian Keamanan | Metode Uji | Ekspektasi Pertahanan Sistem | Status Hasil Pengujian | Catatan Pengujian |
 |:---:|---|---|---|:---:|---|
-| **1** | **SQL Injection (SQLi)** | Form pencarian katalog & parameter URL `?q=' OR 1=1 --` | Diperlakukan sebagai teks literal murni, Prisma memblokir eksekusi SQL liar, tidak ada error Postgres | `[LULUS / KEBAT]` | *[Isi catatan hasil uji mandiri Anda]* |
-| **2** | **Cross-Site Scripting (XSS)** | Injeksi tag `<script>` & payload `<img>` pada URL dan profil | Teks di-escape otomatis oleh React DOM, inline script diblokir CSP, tidak ada popup `alert()` | `[LULUS / KEBAT]` | *[Isi catatan hasil uji mandiri Anda]* |
-| **3** | **Insecure Direct Object References (IDOR)** | Percobaan akses/pembatalan ID peminjaman milik user lain via request tampering | Server menyaring secara ketat via `userId: session.user.id`, aksi ditolak (404/Forbidden) | `[LULUS / KEBAT]` | *[Isi catatan hasil uji mandiri Anda]* |
-| **4** | **Bypass Hak Akses Admin oleh Member** | Member atau publik mengakses `/admin/*` atau endpoint `/api/admin/export/*` | Dicegat oleh middleware dan Server Action (`requireAdmin()`), redirect ke login atau HTTP 403 | `[LULUS / KEBAT]` | *[Isi catatan hasil uji mandiri Anda]* |
-| **5** | **Mass Assignment Role saat Registrasi** | Mengirimkan payload POST form registrasi dengan parameter `role=ADMIN` | Skema Zod mengabaikan role, server action memaksa `Role.MEMBER`, akun tetap berstatus MEMBER | `[LULUS / KEBAT]` | *[Isi catatan hasil uji mandiri Anda]* |
-| **6** | **Enforcement Password Lemah** | Mendaftarkan akun dengan password pendek (< 10 karakter) atau tanpa angka | Ditutupi indikator form dan ditolak oleh Zod di server dengan pesan instruksi keamanan | `[LULUS / KEBAT]` | *[Isi catatan hasil uji mandiri Anda]* |
-| **7** | **Brute-Force & Account Lockout** | Memasukkan password salah 5 kali berturut-turut pada akun yang sama | Akun otomatis terkunci selama 15 menit, aksi `ACCOUNT_LOCKED` terekam di AuditLog | `[LULUS / KEBAT]` | *[Isi catatan hasil uji mandiri Anda]* |
-| **8** | **Pencurian Sesi & Logout** | Membaca `document.cookie` di browser DevTools dan menekan tombol logout | Cookie ber-flag `HttpOnly` (tidak terbaca JS), token terhapus dari tabel DB saat logout | `[LULUS / KEBAT]` | *[Isi catatan hasil uji mandiri Anda]* |
-| **9** | **Upload File Berbahaya (Content Spoofing)** | Mengunggah file script berbahaya yang dinamai `.jpg` atau file berukuran > 1 MB | Ditolak oleh server lewat pengecekan Magic Bytes dan batas ukuran, file sah diacak UUID | `[LULUS / KEBAT]` | *[Isi catatan hasil uji mandiri Anda]* |
-| **10** | **CSV Injection & Git Secrets Leak** | Input profil berawalan `=cmd\|...` diekspor ke CSV, serta audit `git log` | Sel CSV otomatis disanitasi prefix `'`, file `.env` diabaikan oleh `.gitignore` tanpa kebocoran secret | `[LULUS / KEBAT]` | *[Isi catatan hasil uji mandiri Anda]* |
+| **1** | **SQL Injection (SQLi)** | Form pencarian katalog & parameter URL `?q=' OR 1=1 --` | Diperlakukan sebagai teks literal murni, Prisma memblokir eksekusi SQL liar, tidak ada error Postgres | `[LULUS / GAGAL]` | *[Isi catatan hasil uji mandiri Anda]* |
+| **2** | **Cross-Site Scripting (XSS)** | Injeksi tag `<script>` & payload `<img>` pada URL dan profil | Teks di-escape otomatis oleh React DOM, inline script diblokir CSP, tidak ada popup `alert()` | `[LULUS / GAGAL]` | *[Isi catatan hasil uji mandiri Anda]* |
+| **3** | **Insecure Direct Object References (IDOR)** | Percobaan akses/pembatalan ID peminjaman milik user lain via request tampering | Server menyaring secara ketat via `userId: session.user.id`, aksi ditolak (404/Forbidden) | `[LULUS / GAGAL]` | *[Isi catatan hasil uji mandiri Anda]* |
+| **4** | **Bypass Hak Akses Admin oleh Member** | Member atau publik mengakses `/admin/*` atau endpoint `/api/admin/export/*` | Dicegat oleh middleware dan Server Action (`requireAdmin()`), redirect ke login atau HTTP 403 | `[LULUS / GAGAL]` | *[Isi catatan hasil uji mandiri Anda]* |
+| **5** | **Mass Assignment Role saat Registrasi** | Mengirimkan payload POST form registrasi dengan parameter `role=ADMIN` | Skema Zod mengabaikan role, server action memaksa `Role.MEMBER`, akun tetap berstatus MEMBER | `[LULUS / GAGAL]` | *[Isi catatan hasil uji mandiri Anda]* |
+| **6** | **Enforcement Password Lemah** | Mendaftarkan akun dengan password pendek (< 10 karakter) atau tanpa angka | Ditutupi indikator form dan ditolak oleh Zod di server dengan pesan instruksi keamanan | `[LULUS / GAGAL]` | *[Isi catatan hasil uji mandiri Anda]* |
+| **7** | **Brute-Force & Account Lockout** | Memasukkan password salah 5 kali berturut-turut pada akun yang sama | Akun otomatis terkunci selama 15 menit, aksi `ACCOUNT_LOCKED` terekam di AuditLog | `[LULUS / GAGAL]` | *[Isi catatan hasil uji mandiri Anda]* |
+| **8** | **Pencurian Sesi & Logout** | Membaca `document.cookie` di browser DevTools dan menekan tombol logout | Cookie ber-flag `HttpOnly` (tidak terbaca JS), token terhapus dari tabel DB saat logout | `[LULUS / GAGAL]` | *[Isi catatan hasil uji mandiri Anda]* |
+| **9** | **Upload File Berbahaya (Content Spoofing)** | Mengunggah file script berbahaya yang dinamai `.jpg` atau file berukuran > 1 MB | Ditolak oleh server lewat pengecekan Magic Bytes dan batas ukuran, file sah diacak UUID | `[LULUS / GAGAL]` | *[Isi catatan hasil uji mandiri Anda]* |
+| **10** | **CSV Injection & Git Secrets Leak** | Input profil berawalan `=cmd\|...` diekspor ke CSV, serta audit `git log` | Sel CSV otomatis disanitasi prefix `'`, file `.env` diabaikan oleh `.gitignore` tanpa kebocoran secret | `[LULUS / GAGAL]` | *[Isi catatan hasil uji mandiri Anda]* |
+| **11** | **Audit HTTP Security Headers (SecurityHeaders.com)** | Pemindaian online scanner publik: [Hasil Scan SecurityHeaders.com](https://securityheaders.com/?q=https%3A%2F%2Ftamanbaca-warga-yct9.vercel.app%2F&followRedirects=on) | Semua header keamanan esensial (HSTS, CSP, X-Frame-Options, X-Content-Type-Options, Referrer-Policy, Permissions-Policy) aktif, X-Powered-By disembunyikan | `LULUS (Grade A+)` | Terverifikasi publik di SecurityHeaders.com dengan nilai kepatuhan Grade A+ |
 
 ---
 
