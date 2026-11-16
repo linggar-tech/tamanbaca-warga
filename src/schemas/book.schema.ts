@@ -2,6 +2,9 @@ import { z } from "zod";
 
 const currentYear = new Date().getFullYear();
 
+// Host gambar eksternal yang diizinkan sesuai direktif img-src pada Content Security Policy (CSP)
+export const ALLOWED_COVER_HOSTS = ["images.unsplash.com", "covers.openlibrary.org"];
+
 export const bookSchema = z.object({
   title: z
     .string()
@@ -48,12 +51,26 @@ export const bookSchema = z.object({
     .trim()
     .max(500, "URL sampul terlalu panjang")
     .refine(
-      (val) =>
-        !val ||
-        val.startsWith("https://") ||
-        val.startsWith("/uploads/covers/"),
+      (val) => {
+        if (!val) return true;
+        // Izinkan path upload lokal atau data URI
+        if (val.startsWith("/uploads/covers/") || val.startsWith("data:image/")) {
+          return true;
+        }
+        // Jika URL eksternal HTTPS, validasi hostname terhadap whitelist CSP
+        if (val.startsWith("https://")) {
+          try {
+            const url = new URL(val);
+            return ALLOWED_COVER_HOSTS.includes(url.hostname.toLowerCase());
+          } catch {
+            return false;
+          }
+        }
+        return false;
+      },
       {
-        message: "URL sampul harus menggunakan protokol HTTPS yang aman atau bersumber dari upload lokal.",
+        message:
+          "URL sampul eksternal hanya diizinkan dari domain tepercaya (images.unsplash.com atau covers.openlibrary.org) sesuai kebijakan CSP.",
       }
     )
     .optional()

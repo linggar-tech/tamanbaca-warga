@@ -88,9 +88,20 @@ export async function GET(
         return new NextResponse("File fisik sampul tidak ditemukan di disk", { status: 404 });
       }
     }
-    // Skenario 3: External URL (contoh: Unsplash / OpenLibrary dari seed awal)
-    else if (coverUrl.startsWith("http://") || coverUrl.startsWith("https://")) {
-      return NextResponse.redirect(coverUrl, 307);
+    // Skenario 3: External URL (hanya domain yang diizinkan di CSP)
+    else if (coverUrl.startsWith("https://")) {
+      try {
+        const parsedUrl = new URL(coverUrl);
+        const allowedHosts = ["images.unsplash.com", "covers.openlibrary.org"];
+        if (allowedHosts.includes(parsedUrl.hostname.toLowerCase())) {
+          return NextResponse.redirect(coverUrl, 307);
+        }
+      } catch {
+        // Abaikan parse error
+      }
+      return new NextResponse("Host gambar eksternal tidak diizinkan oleh kebijakan CSP", {
+        status: 400,
+      });
     } else {
       return new NextResponse("Skema penyimpanan sampul tidak didukung", { status: 400 });
     }
