@@ -6,7 +6,7 @@ Aplikasi web pengelolaan taman bacaan masyarakat yang dirancang dengan arsitektu
 
 ## 🌐 URL Aplikasi Publik (Live Deployment)
 
-* **Production URL**: `https://tamanbaca-warga.vercel.app` *(Ganti dengan URL subdomain Vercel Anda setelah deploy)*
+* **Production URL**: `https://tamanbaca-warga-yct9-nj6tsvlka-lnggr.vercel.app/`
 * **Protokol**: HTTPS dengan sertifikat SSL/TLS otomatis dari Vercel
 * **Database Provider**: Serverless PostgreSQL Neon (Region: `aws-ap-southeast-1` Singapore)
 
