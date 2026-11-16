@@ -104,11 +104,10 @@ Aplikasi membaca seluruh konfigurasi sensitif dari variabel lingkungan. Sediakan
 |---|:---:|---|---|
 | `DATABASE_URL` | Ya | URL koneksi PostgreSQL ber-pooling (Neon SSL mode) | `postgresql://user:pass@ep-xyz.aws.neon.tech/neondb?sslmode=require` |
 | `DIRECT_URL` | Ya | URL koneksi langsung PostgreSQL tanpa pooler (untuk sinkronisasi skema Prisma db push / CLI) | `postgresql://user:pass@ep-xyz.aws.neon.tech/neondb?sslmode=require` |
-| `SESSION_SECRET` | Ya | Kunci acak minimal 32 karakter untuk verifikasi sesi | `a1b2c3d4e5f6... (hex string 32 bytes)` |
 | `SEED_ADMIN_EMAIL` | Ya | Alamat email akun Administrator demo awal | `admin@tamanbaca.id` |
-| `SEED_ADMIN_PASSWORD` | Ya | Kata sandi kuat akun Admin demo (min. 10 karakter, huruf + angka) | `AdminPass123!` |
+| `SEED_ADMIN_PASSWORD` | Ya | Kata sandi kuat akun Admin demo (min. 10 karakter, huruf + angka) | `<masukkan-password-admin-kuat>` |
 | `SEED_MEMBER_EMAIL` | Ya | Alamat email akun Member demo awal | `warga@tamanbaca.id` |
-| `SEED_MEMBER_PASSWORD` | Ya | Kata sandi kuat akun Member demo (min. 10 karakter, huruf + angka) | `WargaPass123!` |
+| `SEED_MEMBER_PASSWORD` | Ya | Kata sandi kuat akun Member demo (min. 10 karakter, huruf + angka) | `<masukkan-password-member-kuat>` |
 | `FINE_PER_DAY` | Ya | Besaran nominal tarif denda per hari keterlambatan (Rupiah) | `1000` |
 | `NEXT_PUBLIC_APP_URL` | Ya | URL dasar aplikasi untuk validasi header CSRF Origin | `http://localhost:3000` (atau URL Vercel di prod) |
 | `NODE_ENV` | Ya | Lingkungan aplikasi runtime | `development` / `production` |
@@ -173,7 +172,6 @@ Buka peramban Anda di `http://localhost:3000`.
    Masuk ke bagian **Environment Variables** pada form deployment Vercel dan tambahkan seluruh variabel:
    * `DATABASE_URL` (connection string pooled Neon)
    * `DIRECT_URL` (connection string unpooled/direct Neon)
-   * `SESSION_SECRET`
    * `SEED_ADMIN_EMAIL` & `SEED_ADMIN_PASSWORD`
    * `SEED_MEMBER_EMAIL` & `SEED_MEMBER_PASSWORD`
    * `FINE_PER_DAY`
